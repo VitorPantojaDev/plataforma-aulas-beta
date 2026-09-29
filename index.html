@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gravações de revisão</title>
+  <style>
+    :root {
+      --fundo: #f7f8fa;
+      --texto: #1b2430;
+      --suave: #5b6675;
+      --linha: #dde2e8;
+      --destaque: #1f5fbf;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--fundo);
+      color: var(--texto);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; }
+    .intro { color: var(--suave); margin: 0 0 28px; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .filtros button {
+      font: inherit; font-size: 0.9rem;
+      padding: 6px 14px; border-radius: 999px;
+      border: 1px solid var(--linha); background: #fff; color: var(--texto);
+      cursor: pointer;
+    }
+    .filtros button[aria-pressed="true"] {
+      background: var(--destaque); border-color: var(--destaque); color: #fff;
+    }
+    .filtros button:focus-visible, a:focus-visible { outline: 3px solid #9cc0f5; outline-offset: 2px; }
+    .aula { padding: 24px 0; border-top: 1px solid var(--linha); }
+    .aula h2 { font-size: 1.2rem; margin: 0 0 2px; }
+    .meta { color: var(--suave); font-size: 0.9rem; margin: 0 0 12px; }
+    .player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #0e1116; border-radius: 6px; overflow: hidden; }
+    .player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .aviso { color: #b3541e; font-size: 0.9rem; margin: 8px 0 0; }
+    .vazio { color: var(--suave); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Gravações de revisão</h1>
+    <p class="intro">Assista às revisões das aulas quando precisar. Escolha a turma abaixo.</p>
+ 
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar por turma"></div>
+    <div id="lista"></div>
+  </main>
+ 
+  <script>
+    // ============================================================
+    // EDITE AQUI: uma linha por gravação.
+    // id    = trecho depois de "v=" na URL do YouTube (youtube.com/watch?v=ESTE_TRECHO)
+    // turma = usado nos botões de filtro (pode ser "Python", "Scratch", etc.)
+    // A ordem da lista é a ordem exibida na página.
+    // ============================================================
+    const aulas = [
+      { titulo: "Revisão - M1L1 Introdução ao desenvolvimento de jogos (prática)", turma: "Unity",  id: "ID_DO_VIDEO" },
+      { titulo: "Revisão - M1L2 Introdução a scripts (prática)", turma: "Unity",  id: "ID_DO_VIDEO" },
+    ];
+ 
+    const PLACEHOLDER = "ID_DO_VIDEO";
+    const filtros = document.getElementById("filtros");
+    const lista = document.getElementById("lista");
+    let turmaAtual = "Todas";
+ 
+    function formatarData(iso) {
+      if (!iso) return "";
+      const [a, m, d] = iso.split("-");
+      return `${d}/${m}/${a}`;
+    }
+ 
+    function desenharFiltros() {
+      const turmas = ["Todas", ...new Set(aulas.map(a => a.turma).filter(Boolean))];
+      // Só mostra os botões se houver mais de uma turma
+      if (turmas.length <= 2) { filtros.hidden = true; return; }
+      filtros.innerHTML = "";
+      turmas.forEach(t => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = t;
+        b.setAttribute("aria-pressed", String(t === turmaAtual));
+        b.addEventListener("click", () => { turmaAtual = t; desenharFiltros(); desenharLista(); });
+        filtros.appendChild(b);
+      });
+    }
+ 
+    function desenharLista() {
+      lista.innerHTML = "";
+      const visiveis = aulas.filter(a => turmaAtual === "Todas" || a.turma === turmaAtual);
+      if (visiveis.length === 0) {
+        lista.innerHTML = '<p class="vazio">Nenhuma gravação disponível ainda.</p>';
+        return;
+      }
+      visiveis.forEach(a => {
+        const sec = document.createElement("section");
+        sec.className = "aula";
+ 
+        const h2 = document.createElement("h2");
+        h2.textContent = a.titulo;
+ 
+        const meta = document.createElement("p");
+        meta.className = "meta";
+        meta.textContent = [a.turma, formatarData(a.data)].filter(Boolean).join(" - ");
+ 
+        sec.append(h2, meta);
+ 
+        if (!a.id || a.id === PLACEHOLDER) {
+          const aviso = document.createElement("p");
+          aviso.className = "aviso";
+          aviso.textContent = "Vídeo ainda não configurado: troque ID_DO_VIDEO pelo ID do YouTube no index.html.";
+          sec.appendChild(aviso);
+        } else {
+          const box = document.createElement("div");
+          box.className = "player";
+          const iframe = document.createElement("iframe");
+          iframe.src = "https://www.youtube.com/embed/" + encodeURIComponent(a.id);
+          iframe.title = a.titulo;
+          iframe.loading = "lazy";
+          iframe.allow = "accelerometer; encrypted-media; picture-in-picture; fullscreen";
+          iframe.allowFullscreen = true;
+          box.appendChild(iframe);
+          sec.appendChild(box);
+        }
+        lista.appendChild(sec);
+      });
+    }
+ 
+    desenharFiltros();
+    desenharLista();
+  </script>
+</body>
+</html>
+ 
